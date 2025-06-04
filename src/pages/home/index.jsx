@@ -10,11 +10,11 @@ const blog = ({ blogs, categories }) => {
   const [allBlogs, setAllBlogs] = useState(safeBlogs);
   const [skip, setSkip] = useState(safeBlogs.length);
   const [loading, setLoading] = useState(false);
-  const [hasMoreBlogs, setHasMoreBlogs] = useState(true); // ✅ New state
+  const [hasMoreBlogs, setHasMoreBlogs] = useState(true);
   const containerRef = useRef();
 
   const loadMoreBlogs = async () => {
-    if (!hasMoreBlogs || loading) return; // ✅ Prevent extra calls
+    if (!hasMoreBlogs || loading) return;
 
     setLoading(true);
     try {
@@ -22,13 +22,11 @@ const blog = ({ blogs, categories }) => {
         params: { skip, limit: 10 },
       });
       const data = res.data;
-      console.log("Data is ", data);
-
       if (data.blogs.length > 0) {
         setAllBlogs((prev) => [...prev, ...data.blogs]);
         setSkip((prev) => prev + data.blogs.length);
       } else {
-        setHasMoreBlogs(false); // ✅ Stop loading when no more blogs
+        setHasMoreBlogs(false);
       }
     } catch (error) {
       console.error("Error loading more blogs:", error);
@@ -38,7 +36,6 @@ const blog = ({ blogs, categories }) => {
 
   useEffect(() => {
     const container = containerRef.current;
-
     const handleScroll = () => {
       if (
         container.scrollTop + container.clientHeight >=
@@ -59,13 +56,29 @@ const blog = ({ blogs, categories }) => {
 
   return (
     <div className="p-5 min-h-screen bg-gray-100 mt-15">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-100">
+      {/* Top Buttons for Mobile */}
+      <div className="md:hidden flex flex-col gap-3 mb-5">
+        <button
+          onClick={() => setShowCategories(!showCategories)}
+          className="text-blue-600 font-medium underline"
+        >
+          {showCategories ? "Hide Categories" : "Show Categories"}
+        </button>
+        <Link href="/create-blog">
+          <button className="rounded-md px-4 py-2 font-bold bg-blue-500 text-white hover:bg-blue-600 w-full">
+            Create a blog
+          </button>
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Blog List */}
         <div
           ref={containerRef}
-          className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 lg:col-span-2 gap-4 p-4 overflow-y-auto max-h-[40rem] hide-scrollbar"
+          className="md:col-span-2 grid grid-cols-1 gap-4 p-2 overflow-y-auto max-h-[40rem] hide-scrollbar"
         >
           {allBlogs.length >= 1 ? (
-            allBlogs.map((item, subIndex) => (
+            allBlogs.map((item) => (
               <div
                 key={item._id}
                 className="relative bg-white rounded-xl shadow-sm border border-gray-200 p-3 text-sm hover:shadow-xl transition"
@@ -119,24 +132,18 @@ const blog = ({ blogs, categories }) => {
           )}
         </div>
 
-        <div className="p-5 w-full">
-          <div className="flex justify-center gap-3 mt-4">
-            <button
-              onClick={() => setShowCategories(!showCategories)}
-              className="md:hidden text-blue-600 font-medium underline mb-4"
-            >
-              {showCategories ? "Hide Categories" : "Show Categories"}
-            </button>
-
+        {/* Sidebar for Categories */}
+        <div className="p-3 w-full">
+          <div className="hidden md:flex justify-between mb-4">
             <Link href="/create-blog">
-              <button className="rounded-md px-4 py-2 font-bold bg-blue-500 text-white hover:bg-blue-600">
+              <button className="rounded-md px-4 py-2 font-bold bg-blue-500 text-white hover:bg-blue-600 w-full">
                 Create a blog
               </button>
             </Link>
           </div>
 
           <div className={`${showCategories ? "block" : "hidden"} md:block`}>
-            <div className="bg-white rounded-xl shadow-xl border mt-10 px-6 py-4">
+            <div className="bg-white rounded-xl shadow-xl border mt-5 px-6 py-4">
               <h2 className="text-blue-900 font-bold text-2xl">Categories</h2>
               <div className="h-0.5 bg-orange-500 w-full mt-2 rounded"></div>
               <div className="flex flex-col mt-3 gap-2 overflow-y-auto max-h-60">
