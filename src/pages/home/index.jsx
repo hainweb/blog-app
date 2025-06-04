@@ -4,8 +4,6 @@ import axios from "axios";
 
 const blog = ({ blogs, categories }) => {
   const safeBlogs = blogs || [];
-  console.log("Blogs", safeBlogs);
-
   const [showCategories, setShowCategories] = useState(false);
   const [allBlogs, setAllBlogs] = useState(safeBlogs);
   const [skip, setSkip] = useState(safeBlogs.length);
@@ -60,10 +58,27 @@ const blog = ({ blogs, categories }) => {
       <div className="md:hidden flex flex-col gap-3 mb-5">
         <button
           onClick={() => setShowCategories(!showCategories)}
-          className="text-blue-600 font-medium underline"
+          className="text-blue-600 font-medium underline w-fit"
         >
           {showCategories ? "Hide Categories" : "Show Categories"}
         </button>
+
+        {showCategories && (
+          <div className="bg-white rounded-xl shadow-md border px-4 py-3">
+            <h2 className="text-blue-900 font-bold text-lg">Categories</h2>
+            <div className="h-0.5 bg-orange-500 w-full mt-1 mb-2 rounded"></div>
+            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto">
+              {categories?.map((ctg, i) => (
+                <Link href={`tag/${ctg.tag}`} key={i}>
+                  <h2 className="text-gray-700 hover:text-orange-600 text-sm">
+                    {ctg.tag} ({ctg.count})
+                  </h2>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <Link href="/create-blog">
           <button className="rounded-md px-4 py-2 font-bold bg-blue-500 text-white hover:bg-blue-600 w-full">
             Create a blog
@@ -110,14 +125,14 @@ const blog = ({ blogs, categories }) => {
             ))
           ) : (
             <div className="flex flex-col items-center justify-center w-full">
-              <h2 className="font-semibold text-gray-800">There is no blogs</h2>
+              <h2 className="font-semibold text-gray-800">There are no blogs</h2>
             </div>
           )}
 
           {loading && (
             <div className="w-full text-center py-4">
               <span className="text-sm text-gray-500">Loading more blogs...</span>
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-center mt-2">
                 <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
             </div>
@@ -132,9 +147,9 @@ const blog = ({ blogs, categories }) => {
           )}
         </div>
 
-        {/* Sidebar for Categories */}
-        <div className="p-3 w-full">
-          <div className="hidden md:flex justify-between mb-4">
+        {/* Sidebar for Desktop */}
+        <div className="p-3 w-full hidden md:block">
+          <div className="mb-4">
             <Link href="/create-blog">
               <button className="rounded-md px-4 py-2 font-bold bg-blue-500 text-white hover:bg-blue-600 w-full">
                 Create a blog
@@ -142,19 +157,17 @@ const blog = ({ blogs, categories }) => {
             </Link>
           </div>
 
-          <div className={`${showCategories ? "block" : "hidden"} md:block`}>
-            <div className="bg-white rounded-xl shadow-xl border mt-5 px-6 py-4">
-              <h2 className="text-blue-900 font-bold text-2xl">Categories</h2>
-              <div className="h-0.5 bg-orange-500 w-full mt-2 rounded"></div>
-              <div className="flex flex-col mt-3 gap-2 overflow-y-auto max-h-60">
-                {categories?.map((ctg, i) => (
-                  <Link href={`tag/${ctg.tag}`} key={i}>
-                    <h2 className="text-gray-700 hover:text-orange-600">
-                      {ctg.tag} ({ctg.count})
-                    </h2>
-                  </Link>
-                ))}
-              </div>
+          <div className="bg-white rounded-xl shadow-xl border px-6 py-4">
+            <h2 className="text-blue-900 font-bold text-2xl">Categories</h2>
+            <div className="h-0.5 bg-orange-500 w-full mt-2 rounded"></div>
+            <div className="flex flex-col mt-3 gap-2 overflow-y-auto max-h-60">
+              {categories?.map((ctg, i) => (
+                <Link href={`tag/${ctg.tag}`} key={i}>
+                  <h2 className="text-gray-700 hover:text-orange-600">
+                    {ctg.tag} ({ctg.count})
+                  </h2>
+                </Link>
+              ))}
             </div>
           </div>
         </div>
