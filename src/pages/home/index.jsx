@@ -9,7 +9,7 @@ const blog = ({ blogs, categories }) => {
   const [showCategories, setShowCategories] = useState(false);
 
   const [allBlogs, setAllBlogs] = useState(blogs || []);
-  const [skip, setSkip] = useState(blogs.length || 0);
+  const [skip, setSkip] = useState(Array.isArray(blogs) ? blogs.length : 0);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef();
 
