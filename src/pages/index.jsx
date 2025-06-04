@@ -6,7 +6,9 @@ import { withSessionSsr } from "../lib/sessions";
 
 export const getServerSideProps = withSessionSsr(async ({ req }) => {
   await db.connect();
-
+  
+// Get user data from session
+const user = req.session.user || null;
   // Fetch latest 10 blogs
   const blogsData = await db
     .get()
@@ -110,7 +112,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     .collection(collections.ANALYTIC_COLLECTIONS)
     .updateOne(filter, update, { upsert: true });
 
-  return { props: { user: null, blogs, categories } };
+  return { props: { user, blogs, categories } };
 });
 
 export default function Home({ user, blogs, categories }) {
