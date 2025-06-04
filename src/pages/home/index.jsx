@@ -127,13 +127,13 @@ const blog = ({ blogs, categories }) => {
               <h2 className="text-blue-900 font-bold text-2xl">Categories</h2>
               <div className="h-0.5 bg-orange-500 w-full mt-2 rounded"></div>
               <div className="flex flex-col mt-3 gap-2 overflow-y-auto max-h-60">
-                {categories.map((ctg, i) => (
-                  <Link href={`tag/${ctg.tag}`} key={i}>
-                    <h2 className="text-gray-700 hover:text-orange-600">
-                      {ctg.tag} ({ctg.count})
-                    </h2>
-                  </Link>
-                ))}
+                {categories?.map((ctg, i) => (
+  <Link href={`tag/${ctg.tag}`} key={i}>
+    <h2 className="text-gray-700 hover:text-orange-600">
+      {ctg.tag} ({ctg.count})
+    </h2>
+  </Link>
+))}
               </div>
             </div>
           </div>
