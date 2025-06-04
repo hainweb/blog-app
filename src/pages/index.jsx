@@ -3,7 +3,7 @@ import collections from "../lib/collections";
 import Layout from "../components/layout/Layout";
 import Blog from "./home";
 import { withSessionSsr } from "../lib/sessions";
-import crypto from "crypto"; // Node.js crypto module to hash the identifier
+import crypto from "crypto";
 
 export const getServerSideProps = withSessionSsr(async ({ req }) => {
   await db.connect();
@@ -50,28 +50,41 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
   // Get user from session
   const user = req.session.user || null;
 
-  // Get client info
+  // Get user-agent and IP
+  const userAgent = req.headers["user-agent"] || "Unknown Agent";
   const userIp =
     req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
     req.connection.remoteAddress ||
     "Unknown IP";
 
-  const userAgent = req.headers["user-agent"] || "Unknown Agent";
+  // Filter out bots and crawlers
+  const isBot = /bot|crawler|spider|crawling|vercel|facebookexternalhit|preview/i.test(userAgent);
+  if (isBot) {
+    return { props: { user, blogs, categories } }; // Skip analytics for bots
+  }
 
+  // Detect OS
   const os = userAgent.includes("Windows")
     ? "Windows"
     : userAgent.includes("Mac")
     ? "Mac"
     : userAgent.includes("Linux")
     ? "Linux"
+    : userAgent.includes("Android")
+    ? "Android"
+    : userAgent.includes("iPhone")
+    ? "iOS"
     : "Other";
 
-  // Build stable identifier: hash(userEmail + IP + user-agent)
+  // Build a stable identifier
   const rawIdentifier = user?.email
     ? `user-${user.email}`
     : `${userIp}-${userAgent}`;
 
-  const identifier = crypto.createHash("sha256").update(rawIdentifier).digest("hex");
+  const identifier = crypto
+    .createHash("sha256")
+    .update(rawIdentifier)
+    .digest("hex");
 
   const now = new Date();
   const today = now.toISOString().split("T")[0];
@@ -82,7 +95,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     hour12: true,
   });
 
-  // Use date + identifier to prevent duplicate entries
+  // Use date + identifier to prevent duplicates
   const filter = {
     identifier,
     date: today,
