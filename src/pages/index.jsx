@@ -76,15 +76,9 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     ? "iOS"
     : "Other";
 
-  // Build a stable identifier
-  const rawIdentifier = user?.email
-    ? `user-${user.email}`
-    : `${userIp}-${userAgent}`;
+  
 
-  const identifier = crypto
-    .createHash("sha256")
-    .update(rawIdentifier)
-    .digest("hex");
+  
 
   const now = new Date();
   const today = now.toISOString().split("T")[0];
@@ -104,8 +98,6 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
   const update = {
     $inc: { totalViewCount: 1 },
     $setOnInsert: {
-      identifier,
-      userMobile: user?.Mobile || null,
       userIp,
       os,
       userAgent,
