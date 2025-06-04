@@ -3,11 +3,11 @@ import collections from "../lib/collections";
 import Layout from "../components/layout/Layout";
 import Blog from "./home";
 import { withSessionSsr } from "../lib/sessions";
-import crypto from "crypto";
 
 export const getServerSideProps = withSessionSsr(async ({ req }) => {
   await db.connect();
 
+  // Fetch latest 10 blogs
   const blogsData = await db
     .get()
     .collection(collections.BLOG_COLLECTIONS)
@@ -25,6 +25,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     date: blog.date ? new Date(blog.date).toLocaleDateString() : null,
   }));
 
+  // Fetch categories with tag counts
   const categories = await db
     .get()
     .collection(collections.BLOG_COLLECTIONS)
@@ -47,23 +48,20 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     ])
     .toArray();
 
-  // Get user from session
-  const user = req.session.user || null;
-
-  // Get user-agent and IP
+  // Extract IP and user-agent
   const userAgent = req.headers["user-agent"] || "Unknown Agent";
   const userIp =
     req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
     req.connection.remoteAddress ||
     "Unknown IP";
 
-  // Filter out bots and crawlers
+  // Block bots/crawlers
   const isBot = /bot|crawler|spider|crawling|vercel|facebookexternalhit|preview/i.test(userAgent);
   if (isBot) {
-    return { props: { user, blogs, categories } }; // Skip analytics for bots
+    return { props: { user: null, blogs, categories } };
   }
 
-  // Detect OS
+  // Determine OS
   const os = userAgent.includes("Windows")
     ? "Windows"
     : userAgent.includes("Mac")
@@ -76,10 +74,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     ? "iOS"
     : "Other";
 
-  
-
-  
-
+  // Date & Time setup
   const now = new Date();
   const today = now.toISOString().split("T")[0];
 
@@ -89,9 +84,10 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     hour12: true,
   });
 
-  // Use date + identifier to prevent duplicates
+  // Basic insert or update query
   const filter = {
-    identifier,
+    userIp,
+    userAgent,
     date: today,
   };
 
@@ -114,7 +110,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     .collection(collections.ANALYTIC_COLLECTIONS)
     .updateOne(filter, update, { upsert: true });
 
-  return { props: { user, blogs, categories } };
+  return { props: { user: null, blogs, categories } };
 });
 
 export default function Home({ user, blogs, categories }) {
