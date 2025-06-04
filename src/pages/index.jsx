@@ -79,7 +79,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     $inc: { totalViewCount: 1 },
     $setOnInsert: {
       identifier,
-      userMobile: User?.Mobile || null,
+      userMobile: user?.Mobile || null,
       userIp,
       userAgent,
       date: today,
