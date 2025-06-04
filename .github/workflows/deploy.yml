@@ -1,0 +1,29 @@
+name: Deploy Next.js App
+
+on:
+  push:
+    branches:
+      - master  # or 'master' or whichever branch you use for deployment
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18  # or your preferred Node.js version
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Next.js App
+        run: npm run build
+
+      # Example: Deploy to Vercel, Netlify, or custom server
+      # Here's a placeholder - update based on your hosting
+      # Or integrate Vercel automatically with GitHub

@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/components/Header.jsx", "src/components/Footer.jsx", "src/components/layout/Layout.tsx", "src/pages/api/auth/login.js", "src/pages/api/auth/register.js", "src/pages/auth/login.jsx", "src/pages/auth/register.jsx", "src/pages/home/index.jsx", "src/pages/index.jsx"],
+  "exclude": ["node_modules"]
+}

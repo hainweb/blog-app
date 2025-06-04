@@ -1,0 +1,146 @@
+import Link from "next/link";
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+
+const blog = ({ blogs, categories }) => {
+  const safeBlogs = blogs || [];
+  console.log("Blogs", safeBlogs);
+
+  const [showCategories, setShowCategories] = useState(false);
+
+  const [allBlogs, setAllBlogs] = useState(blogs || []);
+  const [skip, setSkip] = useState(blogs.length || 0);
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef();
+
+  const loadMoreBlogs = async () => {
+    setLoading(true);
+    const res = await axios.get(`/api/blog`, {
+      params: { skip, limit: 10 },
+    });
+    const data = await res.data;
+    console.log("Data is ", data);
+
+    if (data.blogs.length > 0) {
+      console.log("If condition worked");
+
+      setAllBlogs((prev) => [...prev, ...data.blogs]);
+      setSkip((prev) => prev + data.blogs.length);
+    }
+    setLoading(false);
+  };
+
+  // Auto-load more on scroll
+  useEffect(() => {
+    const container = containerRef.current;
+
+    const handleScroll = () => {
+      if (
+        container.scrollTop + container.clientHeight >=
+          container.scrollHeight - 10 &&
+        !loading
+      ) {
+        loadMoreBlogs();
+      }
+    };
+
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+    }
+
+    return () => container?.removeEventListener("scroll", handleScroll);
+  }, [loading]);
+
+  return (
+    <div className="p-5 min-h-screen bg-gray-100 mt-15">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-gray-100">
+        <div
+          ref={containerRef}
+          className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 lg:grid-cols-1 lg:col-span-2 gap-4 p-4 overflow-y-auto max-h-[40rem] hide-scrollbar"
+        >
+          {allBlogs.length >= 1 ? (
+            allBlogs.map((item, subIndex) => (
+              <div
+                key={item._id}
+                className="relative bg-white rounded-xl shadow-sm border border-gray-200 p-3 text-sm hover:shadow-xl transition"
+              >
+                <p className="text-xs text-gray-500 mb-1">
+                  Published on {item.date} by {item.author}
+                </p>
+                <Link href={`blog/${item._id}`}>
+                  <h2 className="font-bold text-2xl text-gray-800 truncate">
+                    {item.title}
+                  </h2>
+                </Link>
+                <p className="text-gray-600 line-clamp-2">{item.content}</p>
+                <Link href={`blog/${item._id}`}>
+                  <p className="text-orange-500 text-xs mt-2">
+                    Continue reading →
+                  </p>
+                </Link>
+                <div className="mt-2 flex flex-wrap">
+                  {item.tag.map((tg, i) => (
+                    <Link href={`tag/${tg}`} key={i}>
+                      <div className="p-2 bg-gray-100 hover:bg-gray-200 rounded ml-1 mb-1 text-gray-600 text-xs">
+                        <h2>{tg}</h2>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center w-full">
+              <h2 className="font-semibold text-gray-800">There is no blogs</h2>
+            </div>
+          )}
+          {loading && (
+            <div className="w-full text-center py-4">
+              <span className="text-sm text-gray-500">
+                Loading more blogs...
+              </span>
+              <div class="flex items-center justify-center">
+                <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="p-5 w-full">
+          <div className="flex justify-center gap-3 mt-4">
+            <button
+              onClick={() => setShowCategories(!showCategories)}
+              className="md:hidden text-blue-600 font-medium underline mb-4"
+            >
+              {showCategories ? "Hide Categories" : "Show Categories"}
+            </button>
+
+            <Link href="/create-blog">
+              <button className="rounded-md px-4 py-2 font-bold bg-blue-500 text-white hover:bg-blue-600">
+                Create a blog
+              </button>
+            </Link>
+          </div>
+
+          <div className={`${showCategories ? "block" : "hidden"} md:block`}>
+            <div className="bg-white rounded-xl shadow-xl border mt-10 px-6 py-4">
+              <h2 className="text-blue-900 font-bold text-2xl">Categories</h2>
+              <div className="h-0.5 bg-orange-500 w-full mt-2 rounded"></div>
+              <div className="flex flex-col mt-3 gap-2 overflow-y-auto max-h-60">
+                {categories.map((ctg, i) => (
+                  <Link href={`tag/${ctg.tag}`} key={i}>
+                    <h2 className="text-gray-700 hover:text-orange-600">
+                      {ctg.tag} ({ctg.count})
+                    </h2>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default blog;
