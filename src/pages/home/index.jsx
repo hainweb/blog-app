@@ -7,30 +7,35 @@ const blog = ({ blogs, categories }) => {
   console.log("Blogs", safeBlogs);
 
   const [showCategories, setShowCategories] = useState(false);
-
-  const [allBlogs, setAllBlogs] = useState(blogs || []);
-  const [skip, setSkip] = useState(Array.isArray(blogs) ? blogs.length : 0);
+  const [allBlogs, setAllBlogs] = useState(safeBlogs);
+  const [skip, setSkip] = useState(safeBlogs.length);
   const [loading, setLoading] = useState(false);
+  const [hasMoreBlogs, setHasMoreBlogs] = useState(true); // ✅ New state
   const containerRef = useRef();
 
   const loadMoreBlogs = async () => {
+    if (!hasMoreBlogs || loading) return; // ✅ Prevent extra calls
+
     setLoading(true);
-    const res = await axios.get(`/api/blog`, {
-      params: { skip, limit: 10 },
-    });
-    const data = await res.data;
-    console.log("Data is ", data);
+    try {
+      const res = await axios.get(`/api/blog`, {
+        params: { skip, limit: 10 },
+      });
+      const data = res.data;
+      console.log("Data is ", data);
 
-    if (data.blogs.length > 0) {
-      console.log("If condition worked");
-
-      setAllBlogs((prev) => [...prev, ...data.blogs]);
-      setSkip((prev) => prev + data.blogs.length);
+      if (data.blogs.length > 0) {
+        setAllBlogs((prev) => [...prev, ...data.blogs]);
+        setSkip((prev) => prev + data.blogs.length);
+      } else {
+        setHasMoreBlogs(false); // ✅ Stop loading when no more blogs
+      }
+    } catch (error) {
+      console.error("Error loading more blogs:", error);
     }
     setLoading(false);
   };
 
-  // Auto-load more on scroll
   useEffect(() => {
     const container = containerRef.current;
 
@@ -38,7 +43,8 @@ const blog = ({ blogs, categories }) => {
       if (
         container.scrollTop + container.clientHeight >=
           container.scrollHeight - 10 &&
-        !loading
+        !loading &&
+        hasMoreBlogs
       ) {
         loadMoreBlogs();
       }
@@ -49,7 +55,7 @@ const blog = ({ blogs, categories }) => {
     }
 
     return () => container?.removeEventListener("scroll", handleScroll);
-  }, [loading]);
+  }, [loading, hasMoreBlogs]);
 
   return (
     <div className="p-5 min-h-screen bg-gray-100 mt-15">
@@ -94,14 +100,21 @@ const blog = ({ blogs, categories }) => {
               <h2 className="font-semibold text-gray-800">There is no blogs</h2>
             </div>
           )}
+
           {loading && (
             <div className="w-full text-center py-4">
-              <span className="text-sm text-gray-500">
-                Loading more blogs...
-              </span>
-              <div class="flex items-center justify-center">
-                <div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-sm text-gray-500">Loading more blogs...</span>
+              <div className="flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               </div>
+            </div>
+          )}
+
+          {!hasMoreBlogs && (
+            <div className="w-full text-center py-4">
+              <span className="text-sm text-gray-500">
+                You've reached the end of the blogs.
+              </span>
             </div>
           )}
         </div>
@@ -128,12 +141,12 @@ const blog = ({ blogs, categories }) => {
               <div className="h-0.5 bg-orange-500 w-full mt-2 rounded"></div>
               <div className="flex flex-col mt-3 gap-2 overflow-y-auto max-h-60">
                 {categories?.map((ctg, i) => (
-  <Link href={`tag/${ctg.tag}`} key={i}>
-    <h2 className="text-gray-700 hover:text-orange-600">
-      {ctg.tag} ({ctg.count})
-    </h2>
-  </Link>
-))}
+                  <Link href={`tag/${ctg.tag}`} key={i}>
+                    <h2 className="text-gray-700 hover:text-orange-600">
+                      {ctg.tag} ({ctg.count})
+                    </h2>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
