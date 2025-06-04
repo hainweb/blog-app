@@ -13,10 +13,10 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     .aggregate([
       { $unwind: "$blogs" },
       {
-        $replaceRoot: { newRoot: "$blogs" }, // Flatten so each blog becomes a top-level document
+        $replaceRoot: { newRoot: "$blogs" },
       },
-      { $sort: { date: -1 } }, // Optional: sort by date
-      { $limit: 10 }, // Get first 5 blog entries
+      { $sort: { date: -1 } },
+      { $limit: 10 },
     ])
     .toArray();
 
@@ -26,18 +26,12 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     date: blog.date ? new Date(blog.date).toLocaleDateString() : null,
   }));
 
-  console.log("all blogs", blogs);
-
   const categories = await db
     .get()
     .collection(collections.BLOG_COLLECTIONS)
     .aggregate([
-      {
-        $unwind: "$blogs",
-      },
-      {
-        $unwind: "$blogs.tag",
-      },
+      { $unwind: "$blogs" },
+      { $unwind: "$blogs.tag" },
       {
         $group: {
           _id: "$blogs.tag",
@@ -47,7 +41,6 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
       {
         $project: {
           _id: 0,
-          tags: "$alltags",
           tag: "$_id",
           count: 1,
         },
@@ -55,35 +48,46 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     ])
     .toArray();
 
-  console.log("categories", categories);
+  // Get user data from session
+  const user = req.session.user || null;
 
-  const userIp = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  // Get user IP and user-agent
+  const userIp =
+    req.headers["x-forwarded-for"]?.split(",")[0] ||
+    req.connection.remoteAddress ||
+    "Unknown IP";
+
+  const userAgent = req.headers["user-agent"] || "Unknown Agent";
+
   const now = new Date();
-
-  // Date in YYYY-MM-DD
   const today = now.toISOString().split("T")[0];
 
-  // Time in 12-hour format (e.g. "10:30 AM")
   const timeString = now.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
   });
+
+  const identifier = user?.email || req.session.id || `${userIp}-${userAgent}`;
+
   const filter = {
-    userIp,
+    identifier,
     date: today,
   };
 
   const update = {
     $inc: { totalViewCount: 1 },
     $setOnInsert: {
+      identifier,
+      userEmail: user?.email || null,
       userIp,
+      userAgent,
       date: today,
       visitTime: timeString,
     },
-     $set: {
-    lastVisitTime: timeString
-  }
+    $set: {
+      lastVisitTime: timeString,
+    },
   };
 
   await db
@@ -91,7 +95,6 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     .collection(collections.ANALYTIC_COLLECTIONS)
     .updateOne(filter, update, { upsert: true });
 
-  const user = req.session.user || null;
   return { props: { user, blogs, categories } };
 });
 
