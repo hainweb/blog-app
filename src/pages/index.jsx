@@ -3,6 +3,7 @@ import collections from "../lib/collections";
 import Layout from "../components/layout/Layout";
 import Blog from "./home";
 import { withSessionSsr } from "../lib/sessions";
+import crypto from "crypto"; // Node.js crypto module to hash the identifier
 
 export const getServerSideProps = withSessionSsr(async ({ req }) => {
   await db.connect();
@@ -12,9 +13,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     .collection(collections.BLOG_COLLECTIONS)
     .aggregate([
       { $unwind: "$blogs" },
-      {
-        $replaceRoot: { newRoot: "$blogs" },
-      },
+      { $replaceRoot: { newRoot: "$blogs" } },
       { $sort: { date: -1 } },
       { $limit: 10 },
     ])
@@ -48,16 +47,31 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     ])
     .toArray();
 
-  // Get user data from session
+  // Get user from session
   const user = req.session.user || null;
 
-  // Get user IP and user-agent
+  // Get client info
   const userIp =
-    req.headers["x-forwarded-for"]?.split(",")[0] ||
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
     req.connection.remoteAddress ||
     "Unknown IP";
 
   const userAgent = req.headers["user-agent"] || "Unknown Agent";
+
+  const os = userAgent.includes("Windows")
+    ? "Windows"
+    : userAgent.includes("Mac")
+    ? "Mac"
+    : userAgent.includes("Linux")
+    ? "Linux"
+    : "Other";
+
+  // Build stable identifier: hash(userEmail + IP + user-agent)
+  const rawIdentifier = user?.email
+    ? `user-${user.email}`
+    : `${userIp}-${userAgent}`;
+
+  const identifier = crypto.createHash("sha256").update(rawIdentifier).digest("hex");
 
   const now = new Date();
   const today = now.toISOString().split("T")[0];
@@ -68,8 +82,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
     hour12: true,
   });
 
-  const identifier = user?.email || req.session.id || `${userIp}-${userAgent}`;
-
+  // Use date + identifier to prevent duplicate entries
   const filter = {
     identifier,
     date: today,
@@ -81,6 +94,7 @@ export const getServerSideProps = withSessionSsr(async ({ req }) => {
       identifier,
       userMobile: user?.Mobile || null,
       userIp,
+      os,
       userAgent,
       date: today,
       visitTime: timeString,
@@ -106,4 +120,4 @@ export default function Home({ user, blogs, categories }) {
       </Layout>
     </div>
   );
-}
+    }
