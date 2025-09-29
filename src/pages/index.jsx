@@ -5,6 +5,16 @@ import Blog from "./home";
 import { withSessionSsr } from "../lib/sessions";
 
 export const getServerSideProps = withSessionSsr(async ({ req }) => {
+
+   const apiUrl =
+    "https://hain-analytics-backend.onrender.com/api/analytics/log";
+
+  fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ platform: "blogapp" }),
+  });
+
   await db.connect();
   
 // Get user data from session
